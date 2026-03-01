@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv*/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+log/
+logs/
+
+# State files
+.rotate_snat_state*.json
+.eip_pool_state
+
+# Credentials
+.tencentcloud_env
+*.env
+!eip_pools.env
+!rotate_snat.env
+!node_profile.template.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model checkpoints (too large)
+静态版本/autoelective/captcha/model/projects/*/model/*.data-00000-of-00001
+静态版本/autoelective/captcha/model/projects/*/model/*.index
+静态版本/autoelective/captcha/model/projects/*/model/*.meta
+静态版本/autoelective/captcha/model/projects/*/out/
+
+# PID files
+*.pid
+pids/
+
+# Cache
+cache/
+*.cache
