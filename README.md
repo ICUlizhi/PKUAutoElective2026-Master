@@ -1,6 +1,10 @@
 # SKJ System - 选课系统
 
-基于 PKUAutoElective 的自动选课系统，支持多配置并行运行和IP池轮换。
+- 快毕业了把自己的闭源版本发出来
+- 基于 PKUAutoElective 的自动选课系统，支持IP池轮换。
+- 不致谢了，防止前辈被删库
+- 请在腾讯云上弄台按时计费的云服务器，然后链接甩给ai让他自己配置，你配合在腾讯云后台设置vpc, nat, eip等ip相关配置
+- 配置过程复杂漫长，推荐在专业人士陪同下食用
 
 ## 项目结构
 
@@ -19,7 +23,8 @@
 1. **自动选课** - 基于配置文件的自动选课功能
 2. **多配置并行** - 支持同时运行多个配置文件
 3. **IP轮换** - 支持腾讯云NAT网关的IP轮换功能
-4. **验证码识别** - 使用 TensorFlow CNN+GRU+CTC 模型识别验证码
+4. **验证码识别** - 使用 TensorFlow CNN+GRU+CTC 模型识别验证码 
+5. **模拟模式** - 添加了对补选阶段的适配，可在补退选前提前测试代码
 
 ## 快速开始
 
@@ -51,15 +56,26 @@ pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ### 4. 运行
 
-单配置运行：
+**正常模式（实际选课）：**
 ```bash
+# 单配置运行
 bash run_static.sh
-```
 
-多配置并行运行：
-```bash
+# 多配置并行运行
 bash run_static_multi.sh /home/ubuntu/skj_system/config1.ini
 ```
+
+**模拟模式（仅观察，不选课）：**
+```bash
+# 使用inspect模式，只获取已选课程信息，不执行任何选课操作
+bash run_static_inspect.sh /home/ubuntu/skj_system/config1.ini
+```
+
+模拟模式特点：
+- 只获取和显示已选课程信息
+- 不会提交任何选课请求
+- 不会触发选课操作
+- 适合用于测试配置、观察课程状态、监控已选课程
 
 ## 配置说明
 
@@ -99,6 +115,40 @@ tail -f 静态版本/log/multi/config1.log
 ## IP轮换功能
 
 系统支持自动IP轮换，通过腾讯云NAT网关实现。配置好 `rotate_snat.env` 后，系统会在每次循环结束时自动轮换IP。
+
+### IP轮换机制
+
+**1. 自动轮换触发条件：**
+- 每次循环结束时自动轮换（如果设置了 `ROTATE_ON_LOOP_END=1`）
+- 遇到网络错误时紧急轮换（如连接失败、SSL错误等）
+- 有最小轮换间隔限制（默认300秒，通过 `ROTATE_MIN_INTERVAL_SECONDS` 配置）
+
+**2. 轮换逻辑：**
+- 使用循环队列方式，按顺序轮换EIP列表中的IP
+- 轮换状态保存在 `.rotate_snat_state.prod.json` 文件中
+- 每次轮换会更新状态文件，记录当前使用的EIP索引和最后更新时间
+
+**3. IP池管理：**
+- 支持两个IP池（POOL_A 和 POOL_B）的切换
+- 使用 `switch_eip_pool_hourly.sh` 可以按小时切换IP池
+- IP池配置在 `eip_pools.env` 文件中
+
+**4. 轮换脚本：**
+- `rotate_snat_cron.sh` - 执行单次IP轮换
+- `rotate_snat.py` - IP轮换的Python实现
+- `set_eip_pool.sh` - 设置当前使用的IP池
+
+**5. 环境变量控制：**
+- `ROTATE_ON_LOOP_END` - 是否在循环结束时轮换（1/0）
+- `ROTATE_MIN_INTERVAL_SECONDS` - 最小轮换间隔（秒）
+- `ROTATE_SNAT_SCRIPT` - IP轮换脚本路径
+- `ROTATE_SNAT_STATE_FILE` - 状态文件路径
+
+**6. 注意事项：**
+- 确保腾讯云凭证配置正确（`.tencentcloud_env`）
+- 确保NAT网关和子网配置正确
+- IP轮换失败不会影响选课流程，但会记录警告日志
+- 在模拟模式下，IP轮换功能仍然可用
 
 ## 注意事项
 
