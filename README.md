@@ -1,6 +1,6 @@
-# SKJ System - 选课系统
+# PKUAutoElective2026-Master
 
-- 快毕业了把自己的闭源版本发出来
+- 快毕业了把自己的闭源版本发出来，代码比较乱但是能跑就行
 - 基于 PKUAutoElective 的自动选课系统，支持IP池轮换。
 - 不致谢了，防止前辈被删库
 - 请在腾讯云上弄台按时计费的云服务器，然后链接甩给ai让他自己配置，你配合在腾讯云后台设置vpc, nat, eip等ip相关配置
@@ -159,6 +159,7 @@ tail -f 静态版本/log/multi/config1.log
 
 ## 版本信息
 
+- 项目名称：PKUAutoElective2026-Master
 - 基于 PKUAutoElective2023
 - 验证码识别：TensorFlow CNN+GRU+CTC
 - Python版本：3.10+
