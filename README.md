@@ -9,7 +9,6 @@
 ## 项目结构
 
 - `静态版本/` - 使用 TensorFlow 的静态版本（当前使用）
-- `动态版本/` - 使用 PyTorch 的动态版本（已弃用）
 - `config1.ini` - 配置文件示例
 - `run_static_multi.sh` - 多配置并行运行脚本
 - `run_static.sh` - 单配置运行脚本
