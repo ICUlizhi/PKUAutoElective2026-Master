@@ -37,6 +37,10 @@ logs/
 !rotate_snat.env
 !node_profile.template.env
 
+# User config files (may contain sensitive info)
+config*.ini
+!config.sample.ini
+
 # OS
 .DS_Store
 Thumbs.db
