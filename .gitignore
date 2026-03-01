@@ -1,0 +1,47 @@
+# Secrets
+.tencentcloud_env
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.kubeconfig
+
+# Local env/config (may contain credentials)
+.env
+.env.*
+!.env.example
+rotate_snat.env
+config.ini
+config*.ini
+!config.example.ini
+!config.sample.ini
+!*/config.sample.ini
+
+# Runtime state / locks / pid
+*.pid
+*.lock
+.rotate_snat_state*.json
+.eip_pool_state
+.refresh_eip_pool_daemon.pid
+
+# Logs and caches
+*.log
+静态版本/log/
+动态版本/log/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual envs
+.venv/
+.venv-*/
+
+# OS/IDE
+.DS_Store
+.vscode/
+.idea/
