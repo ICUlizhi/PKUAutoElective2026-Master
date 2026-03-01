@@ -73,6 +73,7 @@ NO_DELAY = -1
 _ROTATE_SNAT_SCRIPT = os.environ.get("ROTATE_SNAT_SCRIPT", "/home/ubuntu/work/skj/rotate_snat_cron.sh")
 _ROTATE_ON_LOOP_END = os.environ.get("ROTATE_ON_LOOP_END", "1").lower() in ("1", "true", "yes", "on")
 _ROTATE_MIN_INTERVAL_SECONDS = float(os.environ.get("ROTATE_MIN_INTERVAL_SECONDS", "300"))
+_IAAA_503_ROTATE_THRESHOLD = int(os.environ.get("IAAA_503_ROTATE_THRESHOLD", "2"))
 _LOOP_MODE = os.environ.get("LOOP_MODE", "normal").strip().lower()
 _INSPECT_ONLY_MODE = _LOOP_MODE in ("inspect_only", "observe", "monitor")
 
@@ -271,6 +272,14 @@ def _is_emergency_network_error(e):
     return any(k in msg for k in keywords)
 
 
+def _status_code_from_exception(e):
+    r = getattr(e, "response", None)
+    try:
+        return int(getattr(r, "status_code", 0) or 0)
+    except Exception:
+        return 0
+
+
 def _emergency_rotate_ip(reason):
     ferr.critical("[EMERGENCY_IP_ROTATE] %s" % reason)
     cout.error("[EMERGENCY] %s" % reason)
@@ -296,6 +305,7 @@ def _log_loop_behavior(behavior, rotated_ip="", live_ip="", extra=""):
 def run_iaaa_loop():
 
     elective = None
+    iaaa_503_streak = 0
 
     while True:
 
@@ -351,16 +361,33 @@ def run_iaaa_loop():
             electivePool.put_nowait(elective)
             elective = None
             environ.iaaa_busy = False
+            iaaa_503_streak = 0
 
         except (ServerError, StatusCodeError) as e:
             ferr.error(e)
             cout.warning("ServerError/StatusCodeError encountered")
             _add_error(e)
+            status_code = _status_code_from_exception(e)
+            if status_code == 503:
+                iaaa_503_streak += 1
+                if (
+                    not _INSPECT_ONLY_MODE
+                    and _IAAA_503_ROTATE_THRESHOLD > 0
+                    and iaaa_503_streak >= _IAAA_503_ROTATE_THRESHOLD
+                ):
+                    _emergency_rotate_ip(
+                        "IAAA status 503 streak=%d reached threshold=%d, rotate IP immediately"
+                        % (iaaa_503_streak, _IAAA_503_ROTATE_THRESHOLD)
+                    )
+                    iaaa_503_streak = 0
+            else:
+                iaaa_503_streak = 0
 
         except OperationFailedError as e:
             ferr.error(e)
             cout.warning("OperationFailedError encountered")
             _add_error(e)
+            iaaa_503_streak = 0
 
         except RequestException as e:
             ferr.error(e)
@@ -370,6 +397,7 @@ def run_iaaa_loop():
             # to avoid burning time on a broken egress path.
             if not _INSPECT_ONLY_MODE:
                 _emergency_rotate_ip("IAAA loop RequestException detected, rotate IP immediately")
+            iaaa_503_streak = 0
 
         except IAAAIncorrectPasswordError as e:
             cout.error(e)
@@ -385,6 +413,7 @@ def run_iaaa_loop():
             ferr.error(e)
             cout.warning("IAAAException encountered")
             _add_error(e)
+            iaaa_503_streak = 0
 
         except CaughtCheatingError as e:
             ferr.critical(e) # 严重错误
@@ -501,6 +530,7 @@ def run_elective_loop():
     cout.info("is_print_mutex_rules: %s" % is_print_mutex_rules)
     cout.info("loop_mode: %s" % _LOOP_MODE)
     cout.info("rotate_min_interval_seconds: %s" % _ROTATE_MIN_INTERVAL_SECONDS)
+    cout.info("iaaa_503_rotate_threshold: %s" % _IAAA_503_ROTATE_THRESHOLD)
     cout.info(line)
     cout.info("")
 
